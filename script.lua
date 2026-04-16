@@ -1865,29 +1865,40 @@ AimTab:CreateColorPicker({ Name = "FOV V2 Color", Color = Color3.fromRGB(0,255,0
 -- ========================
 local ESPTab = Window:CreateTab("ESP", "eye")
 
-local ESPLib = loadstring(game:HttpGet("https://kiriot22.com/releases/ESP.lua"))()
-ESPLib:Toggle(true)
-ESPLib.Players = false
-ESPLib.Tracers = false
-ESPLib.Boxes = false
-ESPLib.Names = false
-ESPLib.TeamColor = false
-ESPLib.TeamMates = false
+local ESPLib = {
+    Players = false,
+    Boxes = false,
+    Tracers = false,
+    Names = false,
+    TeamMates = false,
+    TeamColor = false,
+    Color = Color3.fromRGB(255,0,0),
+}
+
+-- Sincroniza as flags do ESPLib com o Config interno
+local function syncESPLib()
+    C.ESP.Enabled = ESPLib.Players
+    C.ESP.Boxes = ESPLib.Boxes
+    C.ESP.Tracers = ESPLib.Tracers
+    C.ESP.Names = ESPLib.Names
+end
 
 ESPTab:CreateSection("ESP")
 
 ESPTab:CreateToggle({ Name = "Enable ESP", CurrentValue = false, Flag = "ESPOn",
-    Callback = function(v) C.ESP.Enabled = v ESPLib.Players = v ESPLib:Toggle(v) end })
+    Callback = function(v)
+        C.ESP.Enabled = v
+        C.ESP.Visible = v
+    end })
 
 ESPTab:CreateToggle({ Name = "Boxes", CurrentValue = false, Flag = "ESPBox",
-    Callback = function(v) C.ESP.Boxes = v ESPLib.Boxes = v end })
+    Callback = function(v) C.ESP.Boxes = v end })
 
 ESPTab:CreateToggle({ Name = "Tracers", CurrentValue = false, Flag = "ESPTrac",
-    Callback = function(v) C.ESP.Tracers = v ESPLib.Tracers = v end })
+    Callback = function(v) C.ESP.Tracers = v end })
 
 ESPTab:CreateToggle({ Name = "Names", CurrentValue = false, Flag = "ESPNames",
-    Callback = function(v) C.ESP.Names = v ESPLib.Names = v end })
-
+    Callback = function(v) C.ESP.Names = v end })
 ESPTab:CreateToggle({ Name = "Skeleton", CurrentValue = false, Flag = "ESPSkel",
     Callback = function(v) C.ESP.Skeleton = v end })
 
@@ -2532,32 +2543,46 @@ local DevTab = Window:CreateTab("DEV", "code")
 DevTab:CreateSection("Developer Access")
 DevTab:CreateLabel("Enter your Roblox username to unlock")
 
+-- Variável para guardar o que foi digitado
+local devInputValue = ""
+
 DevTab:CreateInput({
     Name = "Username",
-    PlaceholderText = "Your username...",
+    PlaceholderText = "Digite seu nick e pressione Enter...",
     RemoveTextAfterFocusLost = false,
     Flag = "DevInput",
     Callback = function(v)
-        -- Verifica se o nome digitado é igual ao nome do player E ao nick autorizado
+        -- Só guarda o valor, não verifica ainda
+        devInputValue = v
+    end,
+})
+
+-- Botão separado para confirmar — evita verificar a cada letra
+DevTab:CreateButton({
+    Name = "Confirmar Acesso",
+    Callback = function()
         local playerName = LP.Name
-        if v == playerName and playerName == "zoompro177" then
+        -- Verifica: o que foi digitado == nome do player == nick autorizado
+        if devInputValue == playerName and playerName == "zoompro177" then
             State.devAccess = true
+            C.Misc.DebugMode = true
+            debugLabel.Visible = true
             Rayfield:Notify({
                 Title = "DEV ACCESS GRANTED",
-                Content = "Welcome, " .. playerName .. "!",
+                Content = "Welcome, " .. playerName .. "! All tools unlocked.",
                 Duration = 5,
             })
         else
             State.devAccess = false
             Rayfield:Notify({
                 Title = "Access Denied",
-                Content = "Invalid credentials.",
+                Content = "Incorrect. Expected your own username.",
                 Duration = 3,
             })
         end
+        devInputValue = ""
     end,
 })
-
 DevTab:CreateSection("Dev Tools")
 
 DevTab:CreateToggle({ Name = "Debug Panel", CurrentValue = false, Flag = "DebugPanel",
